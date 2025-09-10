@@ -1,0 +1,114 @@
+@baseUrl = http://localhost:8080
+@now = {{$isoTimestamp}}
+
+
+### Create a new user
+POST {{baseUrl}}/users
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "endre",
+  "email": "endjor5464@uib.no"
+}
+
+> {%
+    if (response.status >= 200 && response.status < 300
+        && response.body && response.body.id) {
+        client.global.set("endreId", response.body.id);
+    }
+%}
+
+### List all users (-> shows the newly created user)
+GET {{baseUrl}}/users
+Accept: application/json
+
+
+### Create another user
+POST {{baseUrl}}/users
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "jonas",
+  "email": "jonas@hotmail.com"
+}
+
+> {%
+    if (response.status >= 200 && response.status < 300
+        && response.body && response.body.id) {
+        client.global.set("jonasId", response.body.id);
+    }
+%}
+
+### List all users again (-> shows two users)
+GET {{baseUrl}}/users
+Accept: application/json
+
+
+### User 1 creates a new poll
+POST {{baseUrl}}/polls
+Content-Type: application/json
+Accept: application/json
+
+{
+  "question": "Favorite language?",
+  "creatorId": "{{endreId}}",
+  "publishedAt": "{{now}}",
+  "validUntil": "2099-01-01T00:00:00Z",
+  "options": [
+    { "caption": "Java",   "presentationOrder": 1 },
+    { "caption": "Python", "presentationOrder": 2 }
+  ]
+}
+
+> {%
+    if (response.status >= 200 && response.status < 300 && response.body) {
+        if (response.body.id) client.global.set("pollId", response.body.id);
+        if (Array.isArray(response.body.options) && response.body.options.length >= 2) {
+            client.global.set("option1Id", response.body.options[0].id);
+            client.global.set("option2Id", response.body.options[1].id);
+        }
+    }
+%}
+
+### List polls (-> shows the new poll)
+GET {{baseUrl}}/polls
+Accept: application/json
+
+
+### User 2 votes on the poll
+POST {{baseUrl}}/votes
+Content-Type: application/json
+Accept: application/json
+
+{
+  "voterId": "{{jonasId}}",
+  "optionId": "{{option1Id}}"
+}
+
+
+### User 2 changes his vote
+POST {{baseUrl}}/votes
+Content-Type: application/json
+Accept: application/json
+
+{
+  "voterId": "{{jonasId}}",
+  "optionId": "{{option2Id}}"
+}
+
+
+### List votes (-> shows the most recent vote for User 2)
+GET {{baseUrl}}/votes
+Accept: application/json
+
+
+### Delete the one poll
+DELETE {{baseUrl}}/polls/{{pollId}}
+Accept: application/json
+
+
+### List votes (-> empty)
+GET {{baseUrl}}/votes
+Accept: application/json
