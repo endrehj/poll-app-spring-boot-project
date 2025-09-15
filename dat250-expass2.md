@@ -6,12 +6,12 @@
 
 - **Null fields in responses**:  
   Initially, `username` and `email` returned as `null`.  
-  **Solution**: Ensured that getters and setters were properly defined in the `User` class so that Jackson could serialize/deserialize the fields correctly.
+  **Fix**: Ensured that getters and setters were properly defined in the `User` class so that Jackson could serialize/deserialize the fields correctly.
 
 
 - **Circular JSON references**:  
   When returning `Poll` objects, JSON produced infinite recursion between `Poll` and `VoteOption`.  
-  **Solution**: I used `@JsonManagedReference` on `Poll.options` and `@JsonBackReference` on `VoteOption.poll` to break the cycle.
+  **Fix**: I used `@JsonManagedReference` on `Poll.options` and `@JsonBackReference` on `VoteOption.poll` to break the cycle.
 
 
 - **Automated test variables not being set**:  

@@ -13,6 +13,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+@CrossOrigin(
+        origins = "http://localhost:5173",
+        allowedHeaders = "*",
+        methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE, RequestMethod.OPTIONS }
+)
 @RestController
 @RequestMapping("/polls")
 public class PollController {
