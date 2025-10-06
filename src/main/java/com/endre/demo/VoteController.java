@@ -17,13 +17,15 @@ import java.util.UUID;
 )
 @RestController
 @RequestMapping("/votes")
-public class VoteController  {
+public class VoteController {
     private final PollManager pm;
-    public VoteController(PollManager pm) {
+    private final VoteCountCache cache;
+
+    public VoteController(PollManager pm, VoteCountCache cache) {
         this.pm = pm;
+        this.cache = cache;
     }
 
-    //dto
     public static class CreateVoteDto {
         public UUID voterId;
         public UUID optionId;
@@ -36,7 +38,10 @@ public class VoteController  {
         VoteOption option = pm.findOption(dto.optionId)
                 .orElseThrow(() -> new RuntimeException("Option not found"));
 
-        return pm.saveOrReplaceVote(voter, option, Instant.now());
+        Vote v = pm.saveOrReplaceVote(voter, option, Instant.now());
+
+        cache.evict(option.getPoll().getId());
+        return v;
     }
 
     @GetMapping
@@ -51,6 +56,11 @@ public class VoteController  {
 
     @DeleteMapping("/{id}")
     public void deleteVote(@PathVariable UUID id) {
+        pm.findVote(id).ifPresent(v -> {
+            if (v.getOption() != null && v.getOption().getPoll() != null) {
+                cache.evict(v.getOption().getPoll().getId());
+            }
+        });
         pm.deleteVote(id);
     }
 }

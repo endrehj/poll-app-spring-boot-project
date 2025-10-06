@@ -5,13 +5,11 @@ import com.endre.demo.domain.Poll;
 import com.endre.demo.domain.PollManager;
 import com.endre.demo.domain.User;
 import com.endre.demo.domain.VoteOption;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @CrossOrigin(
         origins = "http://localhost:5173",
@@ -22,8 +20,12 @@ import java.util.UUID;
 @RequestMapping("/polls")
 public class PollController {
     private final PollManager pm;
+    private final VoteCountCache cache;
 
-    public PollController(PollManager pm) { this.pm = pm; }
+    public PollController(PollManager pm, VoteCountCache cache) {
+        this.pm = pm;
+        this.cache = cache;
+    }
 
     // dto
     public static class CreatePollDto {
@@ -78,5 +80,17 @@ public class PollController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
         pm.deletePoll(id);
+    }
+
+    @GetMapping("/{id}/counts")
+    public Map<String, Long> getCounts(@PathVariable UUID id) {
+        return cache.getOrLoad(id, () -> pm.computeVoteCounts(id));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Poll> getPoll(@PathVariable UUID id) {
+        return pm.findPoll(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

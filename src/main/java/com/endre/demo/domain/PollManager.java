@@ -2,6 +2,7 @@ package com.endre.demo.domain;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -119,4 +120,16 @@ public class PollManager {
     public Collection<VoteOption> findAllOptions() {
         return options.values();
     }
+
+    public Map<String, Long> computeVoteCounts(UUID pollId) {
+        return findAllVotes().stream()
+                .filter(v -> v.getOption() != null
+                        && v.getOption().getPoll() != null
+                        && pollId.equals(v.getOption().getPoll().getId()))
+                .collect(Collectors.groupingBy(
+                        v -> String.valueOf(v.getOption().getPresentationOrder()),
+                        Collectors.counting()
+                ));
+    }
+
 }
